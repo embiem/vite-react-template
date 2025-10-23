@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "ARC";
+  default: true;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-100: #090d18;
+  --color-base-200: oklch(23.26% 0.014 253.1);
+  --color-base-300: oklch(21.15% 0.012 254.09);
+  --color-base-content: oklch(97.807% 0.029 256.847);
+  --color-primary: #f8eede;
+  --color-primary-content: #090d19;
+  --color-secondary: #c43190;
+  --color-secondary-content: oklch(94% 0.028 342.258);
+  --color-accent: #febc13;
+  --color-accent-content: #090d19;
+  --color-neutral: #090c1c;
+  --color-neutral-content: oklch(92% 0.004 286.32);
+  --color-info: #8bf6ee;
+  --color-info-content: #090d19;
+  --color-success: #30f286;
+  --color-success-content: oklch(37% 0.077 168.94);
+  --color-warning: #fcd20c;
+  --color-warning-content: #090d19;
+  --color-error: #f50a0a;
+  --color-error-content: oklch(27% 0.105 12.094);
+  --radius-selector: 0rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 1;
+}
