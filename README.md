@@ -2,6 +2,36 @@
 
 A full-stack web application template with React frontend and Hono backend, built on top of `npm create vite@latest`'s React+TS template.
 
+## Table of Contents
+
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+  - [1. Install Dependencies](#1-install-dependencies)
+  - [2. Configure Environment](#2-configure-environment)
+  - [3. Initialize Database](#3-initialize-database)
+  - [4. Start Development](#4-start-development)
+- [Available Scripts](#available-scripts)
+- [Architecture](#architecture)
+- [API Routes](#api-routes)
+- [Authentication](#authentication)
+- [Data Fetching with TanStack Query](#data-fetching-with-tanstack-query)
+- [Database Schema](#database-schema)
+- [Database Migrations](#database-migrations)
+- [Common Development Workflows](#common-development-workflows)
+  - [1. Adding a New Component with Tailwind & DaisyUI](#1-adding-a-new-component-with-tailwind--daisyui)
+  - [2. Adding a New Route](#2-adding-a-new-route)
+  - [3. Adding a Query with TanStack Query](#3-adding-a-query-with-tanstack-query)
+  - [4. Adding a Mutation with TanStack Query](#4-adding-a-mutation-with-tanstack-query)
+  - [5. Adding a Database Table & Migration](#5-adding-a-database-table--migration)
+  - [6. Adding a New API Route](#6-adding-a-new-api-route)
+  - [7. Creating a Protected Route](#7-creating-a-protected-route)
+  - [8. Type-Safe API Pattern](#8-type-safe-api-pattern)
+  - [9. Writing Tests](#9-writing-tests)
+- [Production Build](#production-build)
+- [Additional Configuration](#additional-configuration)
+
 ## Features
 
 ### Frontend
