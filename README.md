@@ -343,6 +343,920 @@ Here's a specific example. Let's say our app allows users to provide a "name" an
 
 By following this strategy, we can ensure zero downtime deploys and schema migrations.
 
+## Common Development Workflows
+
+This section provides practical, copy-paste-ready examples for typical development tasks you'll encounter when building features.
+
+### 1. Adding a New Component with Tailwind & DaisyUI
+
+Create a new component in `src/components/`:
+
+```tsx
+// src/components/UserCard.tsx
+interface UserCardProps {
+  name: string;
+  email: string;
+  avatar?: string;
+  role?: string;
+}
+
+export function UserCard({ name, email, avatar, role }: UserCardProps) {
+  return (
+    <div className="card bg-base-200 shadow-xl">
+      <div className="card-body">
+        <div className="flex items-center gap-4">
+          {/* Avatar */}
+          <div className="avatar placeholder">
+            <div className="bg-neutral text-neutral-content w-16 rounded-full">
+              {avatar ? (
+                <img src={avatar} alt={name} />
+              ) : (
+                <span className="text-xl">{name.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+          </div>
+
+          {/* User info */}
+          <div className="flex-1">
+            <h2 className="card-title">{name}</h2>
+            <p className="text-sm opacity-70">{email}</p>
+            {role && (
+              <div className="badge badge-primary badge-sm mt-2">{role}</div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="card-actions justify-end mt-4">
+          <button className="btn btn-primary btn-sm">View Profile</button>
+          <button className="btn btn-ghost btn-sm">Message</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+**DaisyUI Components Used:**
+- `card`, `card-body`, `card-title`, `card-actions` - Card container
+- `avatar`, `placeholder` - Avatar component
+- `badge` - Small status indicators
+- `btn`, `btn-primary`, `btn-ghost`, `btn-sm` - Button variants
+
+**Responsive Design:**
+```tsx
+// Responsive grid layout example
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <UserCard {...props} />
+  <UserCard {...props} />
+  <UserCard {...props} />
+</div>
+```
+
+### 2. Adding a New Route
+
+**Step 1:** Create a page component in `src/components/`:
+
+```tsx
+// src/components/UsersPage.tsx
+import { UserCard } from "./UserCard";
+
+export function UsersPage() {
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Team Members</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Your content here */}
+      </div>
+    </div>
+  );
+}
+```
+
+**Step 2:** Add the route to `src/App.tsx`:
+
+```tsx
+import { UsersPage } from "./components/UsersPage";
+
+// Inside the <Routes> component:
+<Route path="/users" element={<UsersPage />} />
+```
+
+**Step 3:** Add navigation link to the navbar in `src/App.tsx`:
+
+```tsx
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-black text-white min-h-screen">
+      <nav className="navbar bg-base-300">
+        <div className="navbar-start">
+          <Link to="/" className="btn btn-ghost text-xl">Home</Link>
+        </div>
+        <div className="navbar-center gap-2">
+          <Link to="/items" className="btn btn-ghost">Items</Link>
+          <Link to="/users" className="btn btn-ghost">Users</Link>
+        </div>
+        <div className="navbar-end">
+          {/* Auth buttons */}
+        </div>
+      </nav>
+      <div className="container mx-auto p-8">{children}</div>
+    </div>
+  );
+}
+```
+
+### 3. Adding a Query with TanStack Query
+
+**Step 1:** Create a fetch function and type:
+
+```tsx
+// src/components/UsersPage.tsx
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+async function fetchUsers(): Promise<User[]> {
+  const response = await fetch("http://localhost:3000/api/users");
+  if (!response.ok) {
+    throw new Error("Failed to fetch users");
+  }
+  return response.json();
+}
+```
+
+**Step 2:** Use `useQuery` in your component:
+
+```tsx
+import { useQuery } from "@tanstack/react-query";
+import { UserCard } from "./UserCard";
+
+export function UsersPage() {
+  const { data: users, isLoading, error } = useQuery({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Error: {error.message}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Team Members</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {users?.map((user) => (
+          <UserCard key={user.id} {...user} />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**DaisyUI Loading & Error Components Used:**
+- `loading loading-spinner loading-lg` - Loading spinner
+- `alert alert-error` - Error message container
+
+### 4. Adding a Mutation with TanStack Query
+
+**Step 1:** Create a mutation function:
+
+```tsx
+// src/components/CreateUserForm.tsx
+interface CreateUserData {
+  name: string;
+  email: string;
+  role: string;
+}
+
+async function createUser(data: CreateUserData): Promise<User> {
+  const response = await fetch("http://localhost:3000/api/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", // Include cookies for auth
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to create user");
+  }
+
+  return response.json();
+}
+```
+
+**Step 2:** Use `useMutation` with cache invalidation:
+
+```tsx
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+
+export function CreateUserForm() {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({ name: "", email: "", role: "member" });
+
+  const mutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      // Invalidate and refetch users query
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      // Reset form
+      setFormData({ name: "", email: "", role: "member" });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="card bg-base-200 shadow-xl p-6">
+      <h2 className="card-title mb-4">Add New User</h2>
+
+      <div className="form-control mb-4">
+        <label className="label">
+          <span className="label-text">Name</span>
+        </label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="input input-bordered"
+          required
+        />
+      </div>
+
+      <div className="form-control mb-4">
+        <label className="label">
+          <span className="label-text">Email</span>
+        </label>
+        <input
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="input input-bordered"
+          required
+        />
+      </div>
+
+      <div className="form-control mb-4">
+        <label className="label">
+          <span className="label-text">Role</span>
+        </label>
+        <select
+          value={formData.role}
+          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          className="select select-bordered"
+        >
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      {mutation.error && (
+        <div className="alert alert-error mb-4">
+          <span>{mutation.error.message}</span>
+        </div>
+      )}
+
+      {mutation.isSuccess && (
+        <div className="alert alert-success mb-4">
+          <span>User created successfully!</span>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="btn btn-primary"
+        disabled={mutation.isPending}
+      >
+        {mutation.isPending ? (
+          <>
+            <span className="loading loading-spinner loading-sm"></span>
+            Creating...
+          </>
+        ) : (
+          "Create User"
+        )}
+      </button>
+    </form>
+  );
+}
+```
+
+**Optimistic Updates (Advanced):**
+
+For instant UI feedback before server response:
+
+```tsx
+const mutation = useMutation({
+  mutationFn: createUser,
+  onMutate: async (newUser) => {
+    // Cancel outgoing refetches
+    await queryClient.cancelQueries({ queryKey: ["users"] });
+
+    // Snapshot previous value
+    const previousUsers = queryClient.getQueryData(["users"]);
+
+    // Optimistically update
+    queryClient.setQueryData(["users"], (old: User[]) => [
+      ...old,
+      { ...newUser, id: "temp-id" },
+    ]);
+
+    return { previousUsers };
+  },
+  onError: (err, newUser, context) => {
+    // Rollback on error
+    queryClient.setQueryData(["users"], context?.previousUsers);
+  },
+  onSettled: () => {
+    // Refetch after success or error
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+  },
+});
+```
+
+### 5. Adding a Database Table & Migration
+
+**Step 1:** Define your schema in `server/schema.ts`:
+
+```typescript
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { user } from "./schema"; // Import existing user table
+
+export const post = pgTable("post", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  published: boolean("published").default(false).notNull(),
+  authorId: text("author_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// TypeScript type inference
+export type Post = typeof post.$inferSelect;
+export type NewPost = typeof post.$inferInsert;
+```
+
+**Step 2:** Generate migration file:
+
+```bash
+npm run db:generate
+```
+
+This creates a SQL migration file in `drizzle/` directory like `0001_friendly_name.sql`.
+
+**Step 3:** Apply migration to database:
+
+```bash
+npm run db:migrate
+```
+
+**Step 4:** Use the new table in your API (see next section).
+
+**Custom Migration with Data Seeding:**
+
+```bash
+npm run db:generate -- --custom --name=seed-posts
+```
+
+Then edit the generated SQL file to add seed data:
+
+```sql
+-- drizzle/0002_seed_posts.sql
+INSERT INTO post (id, title, content, published, author_id, created_at, updated_at)
+VALUES
+  ('1', 'Welcome Post', 'Welcome to our blog!', true, 'user-id-here', NOW(), NOW()),
+  ('2', 'Getting Started', 'Here is how to get started...', true, 'user-id-here', NOW(), NOW());
+```
+
+### 6. Adding a New API Route
+
+**Step 1:** Add Hono endpoint in `server/index.ts`:
+
+```typescript
+import { db } from "./db";
+import { post } from "./schema";
+import { eq, desc } from "drizzle-orm";
+import { getCurrentUser } from "./index"; // Import helper
+
+// GET all posts
+app.get("/api/posts", async (c) => {
+  try {
+    const posts = await db
+      .select()
+      .from(post)
+      .where(eq(post.published, true))
+      .orderBy(desc(post.createdAt));
+
+    return c.json(posts);
+  } catch (error) {
+    return c.json({ error: "Failed to fetch posts" }, 500);
+  }
+});
+
+// GET single post
+app.get("/api/posts/:id", async (c) => {
+  const id = c.req.param("id");
+
+  try {
+    const [postData] = await db
+      .select()
+      .from(post)
+      .where(eq(post.id, id));
+
+    if (!postData) {
+      return c.json({ error: "Post not found" }, 404);
+    }
+
+    return c.json(postData);
+  } catch (error) {
+    return c.json({ error: "Failed to fetch post" }, 500);
+  }
+});
+
+// POST new post (protected)
+app.post("/api/posts", async (c) => {
+  const currentUser = await getCurrentUser(c);
+  if (!currentUser) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const body = await c.req.json<{ title: string; content: string }>();
+
+    // Validation
+    if (!body.title || !body.content) {
+      return c.json({ error: "Title and content are required" }, 400);
+    }
+
+    const [newPost] = await db
+      .insert(post)
+      .values({
+        title: body.title,
+        content: body.content,
+        authorId: currentUser.id,
+      })
+      .returning();
+
+    return c.json(newPost, 201);
+  } catch (error) {
+    return c.json({ error: "Failed to create post" }, 500);
+  }
+});
+
+// PATCH update post (protected)
+app.patch("/api/posts/:id", async (c) => {
+  const currentUser = await getCurrentUser(c);
+  if (!currentUser) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const id = c.req.param("id");
+
+  try {
+    const body = await c.req.json<{ title?: string; content?: string; published?: boolean }>();
+
+    // Check ownership
+    const [existingPost] = await db
+      .select()
+      .from(post)
+      .where(eq(post.id, id));
+
+    if (!existingPost) {
+      return c.json({ error: "Post not found" }, 404);
+    }
+
+    if (existingPost.authorId !== currentUser.id) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+
+    const [updatedPost] = await db
+      .update(post)
+      .set(body)
+      .where(eq(post.id, id))
+      .returning();
+
+    return c.json(updatedPost);
+  } catch (error) {
+    return c.json({ error: "Failed to update post" }, 500);
+  }
+});
+
+// DELETE post (protected)
+app.delete("/api/posts/:id", async (c) => {
+  const currentUser = await getCurrentUser(c);
+  if (!currentUser) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const id = c.req.param("id");
+
+  try {
+    // Check ownership
+    const [existingPost] = await db
+      .select()
+      .from(post)
+      .where(eq(post.id, id));
+
+    if (!existingPost) {
+      return c.json({ error: "Post not found" }, 404);
+    }
+
+    if (existingPost.authorId !== currentUser.id) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+
+    await db.delete(post).where(eq(post.id, id));
+
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: "Failed to delete post" }, 500);
+  }
+});
+```
+
+**Common Drizzle Query Patterns:**
+
+```typescript
+// Select with join
+const postsWithAuthors = await db
+  .select({
+    post: post,
+    author: user,
+  })
+  .from(post)
+  .leftJoin(user, eq(post.authorId, user.id));
+
+// Count
+const [{ count }] = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(post);
+
+// Pagination
+const posts = await db
+  .select()
+  .from(post)
+  .limit(10)
+  .offset(page * 10);
+
+// Search
+import { like } from "drizzle-orm";
+const results = await db
+  .select()
+  .from(post)
+  .where(like(post.title, `%${searchTerm}%`));
+```
+
+### 7. Creating a Protected Route
+
+**Backend:** Use the `getCurrentUser()` helper:
+
+```typescript
+// server/index.ts
+app.get("/api/profile", async (c) => {
+  const currentUser = await getCurrentUser(c);
+
+  if (!currentUser) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  return c.json(currentUser);
+});
+```
+
+**Frontend:** Check session and redirect:
+
+```tsx
+// src/components/ProfilePage.tsx
+import { useSession } from "../lib/auth-client";
+import { useNavigate } from "react-router";
+import { useEffect } from "react";
+
+export function ProfilePage() {
+  const { data: session, isPending } = useSession();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      navigate("/login");
+    }
+  }, [session, isPending, navigate]);
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null; // Will redirect
+  }
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Profile</h1>
+      <div className="card bg-base-200 shadow-xl">
+        <div className="card-body">
+          <p><strong>Email:</strong> {session.user?.email}</p>
+          <p><strong>Name:</strong> {session.user?.name}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+**Alternative:** Create a `ProtectedRoute` wrapper component:
+
+```tsx
+// src/components/ProtectedRoute.tsx
+import { useSession } from "../lib/auth-client";
+import { Navigate } from "react-router";
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// Usage in App.tsx:
+<Route
+  path="/profile"
+  element={
+    <ProtectedRoute>
+      <ProfilePage />
+    </ProtectedRoute>
+  }
+/>
+```
+
+### 8. Type-Safe API Pattern
+
+Share types between frontend and backend by creating a shared types file:
+
+**Step 1:** Create shared types (in `server/schema.ts` or separate file):
+
+```typescript
+// server/schema.ts
+export type Post = typeof post.$inferSelect;
+export type NewPost = typeof post.$inferInsert;
+
+// API response types
+export interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+```
+
+**Step 2:** Import types in frontend:
+
+```tsx
+// src/components/PostsPage.tsx
+import type { Post } from "../../server/schema";
+
+async function fetchPosts(): Promise<Post[]> {
+  const response = await fetch("http://localhost:3000/api/posts");
+  if (!response.ok) throw new Error("Failed to fetch");
+  return response.json();
+}
+
+export function PostsPage() {
+  const { data: posts } = useQuery<Post[]>({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+  });
+
+  return (
+    <div>
+      {posts?.map((post: Post) => (
+        <div key={post.id}>
+          <h2>{post.title}</h2>
+          <p>{post.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+**Step 3:** Create a type-safe API client (advanced):
+
+```typescript
+// src/lib/api-client.ts
+import type { Post, NewPost } from "../../server/schema";
+
+const API_BASE = "http://localhost:3000/api";
+
+async function request<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Request failed");
+  }
+
+  return response.json();
+}
+
+export const api = {
+  posts: {
+    list: () => request<Post[]>("/posts"),
+    get: (id: string) => request<Post>(`/posts/${id}`),
+    create: (data: Omit<NewPost, "id" | "authorId" | "createdAt" | "updatedAt">) =>
+      request<Post>("/posts", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Post>) =>
+      request<Post>(`/posts/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/posts/${id}`, { method: "DELETE" }),
+  },
+};
+
+// Usage:
+const { data } = useQuery({
+  queryKey: ["posts"],
+  queryFn: () => api.posts.list(),
+});
+```
+
+### 9. Writing Tests
+
+**Unit Test with Vitest:**
+
+```typescript
+// src/utils/formatDate.ts
+export function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+// src/utils/formatDate.test.ts
+import { expect, test, describe } from "vitest";
+import { formatDate } from "./formatDate";
+
+describe("formatDate", () => {
+  test("formats date correctly", () => {
+    const date = new Date("2024-01-15");
+    expect(formatDate(date)).toBe("January 15, 2024");
+  });
+
+  test("handles current date", () => {
+    const result = formatDate(new Date());
+    expect(result).toMatch(/\w+ \d{1,2}, \d{4}/);
+  });
+});
+```
+
+Run tests:
+```bash
+npm run test:unit
+```
+
+**E2E Test with Playwright:**
+
+```typescript
+// e2e/posts.spec.ts
+import { test, expect } from "@playwright/test";
+
+test.describe("Posts Page", () => {
+  test("should display list of posts", async ({ page }) => {
+    await page.goto("/posts");
+
+    // Wait for posts to load
+    await expect(page.getByRole("heading", { name: "Posts" })).toBeVisible();
+
+    // Check if posts are displayed
+    const posts = page.locator('[data-testid="post-card"]');
+    await expect(posts).toHaveCount(3);
+  });
+
+  test("should create a new post when logged in", async ({ page }) => {
+    // Login first
+    await page.goto("/login");
+    await page.getByLabel("Email").fill("test@example.com");
+    await page.getByLabel("Password").fill("password123");
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Navigate to create post page
+    await page.goto("/posts/new");
+
+    // Fill form
+    await page.getByLabel("Title").fill("Test Post");
+    await page.getByLabel("Content").fill("This is a test post");
+    await page.getByRole("button", { name: "Create Post" }).click();
+
+    // Verify success
+    await expect(page.getByText("Post created successfully")).toBeVisible();
+  });
+
+  test("should show error for unauthorized user", async ({ page }) => {
+    await page.goto("/posts/new");
+
+    // Should redirect to login
+    await expect(page).toHaveURL(/\/login/);
+  });
+});
+```
+
+Run E2E tests:
+```bash
+npm run test:e2e
+npm run test:e2e:ui  # With UI mode
+```
+
+**Test Component with React Testing Library (optional):**
+
+```bash
+npm install -D @testing-library/react @testing-library/user-event jsdom
+```
+
+```typescript
+// src/components/UserCard.test.tsx
+import { render, screen } from "@testing-library/react";
+import { expect, test } from "vitest";
+import { UserCard } from "./UserCard";
+
+test("renders user information", () => {
+  render(
+    <UserCard
+      name="John Doe"
+      email="john@example.com"
+      role="admin"
+    />
+  );
+
+  expect(screen.getByText("John Doe")).toBeInTheDocument();
+  expect(screen.getByText("john@example.com")).toBeInTheDocument();
+  expect(screen.getByText("admin")).toBeInTheDocument();
+});
+```
+
 ## Production Build
 
 ```bash
