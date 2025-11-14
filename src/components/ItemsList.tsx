@@ -7,7 +7,7 @@ interface Item {
 }
 
 async function fetchItems(): Promise<Item[]> {
-  const response = await fetch("http://localhost:3000/api/items");
+  const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/items`);
   if (!response.ok) {
     throw new Error("Failed to fetch items");
   }

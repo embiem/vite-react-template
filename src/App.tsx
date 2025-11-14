@@ -2,8 +2,17 @@ import { Routes, Route, Link } from "react-router-dom";
 
 import ItemsPage from "./pages/Items";
 import HomePage from "./pages/Home";
+import LoginPage from "./pages/Login";
+import { authClient } from "./lib/auth-client";
+import { useCallback } from "react";
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const userSession = authClient.useSession();
+
+  const handleSignOut = useCallback(async () => {
+    await authClient.signOut();
+  }, []);
+
   return (
     <div className="bg-black text-white min-h-screen">
       <nav className="navbar bg-base-300">
@@ -20,6 +29,13 @@ function Layout({ children }: { children: React.ReactNode }) {
             <li>
               <Link to="/items">Items (Query Demo)</Link>
             </li>
+            <li>
+              {userSession.data ? (
+                <button onClick={handleSignOut}>Logout</button>
+              ) : (
+                <Link to="/login">Login</Link>
+              )}
+            </li>
           </ul>
         </div>
       </nav>
@@ -34,6 +50,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/items" element={<ItemsPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </Layout>
   );
