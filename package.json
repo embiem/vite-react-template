@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "concurrently \"npm run test:unit\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"cyan,magenta\"",
     "test:unit": "vitest src",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
