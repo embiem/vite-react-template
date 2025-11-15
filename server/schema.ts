@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  real,
+  integer,
+} from "drizzle-orm/pg-core";
 
 const timestamps = {
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -9,6 +16,15 @@ const timestamps = {
     .defaultNow()
     .notNull(),
 };
+
+export const product = pgTable("product", {
+  id: integer("id").primaryKey(),
+  title: text("title").notNull(),
+  price: real("price").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  image: text("image").notNull(),
+});
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),

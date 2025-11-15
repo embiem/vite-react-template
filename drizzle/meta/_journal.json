@@ -15,6 +15,13 @@
       "when": 1763127906427,
       "tag": "0001_jazzy_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763155397014,
+      "tag": "0002_wakeful_surge",
+      "breakpoints": true
     }
   ]
 }

@@ -1,30 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
+import { useCart } from "../lib/useCart";
+import { useProducts } from "../lib/useProducts";
+import { Link } from "react-router-dom";
 
-interface Item {
-  id: number;
-  name: string;
-  description: string;
-}
+export function ProductList() {
+  const { addItem } = useCart();
 
-async function fetchItems(): Promise<Item[]> {
-  const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/items`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch items");
-  }
-  return response.json();
-}
-
-export function ItemsList() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["items"],
-    queryFn: fetchItems,
-  });
+  const {
+    res: { data, isLoading, error },
+  } = useProducts();
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="loading loading-spinner loading-lg"></div>
-        <span className="ml-4">Loading items...</span>
+        <span className="ml-4">Loading products...</span>
       </div>
     );
   }
@@ -52,13 +41,28 @@ export function ItemsList() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold mb-4">Tech Stack Items</h2>
+      <h2 className="text-2xl font-bold mb-4">Products</h2>
       <div className="grid gap-4 md:grid-cols-2">
         {data?.map((item) => (
           <div key={item.id} className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h3 className="card-title">{item.name}</h3>
+              <h3 className="card-title">{item.title}</h3>
+              <p>${item.price}</p>
+              <div className="card-actions justify-end mt-4">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    addItem(item.id);
+                  }}
+                >
+                  Add to Cart
+                </button>
+                <Link to={`/products/${item.id}`} className="btn btn-secondary">
+                  Edit
+                </Link>
+              </div>
               <p>{item.description}</p>
+              <img src={item.image} className="w-full h-48 object-contain" />
             </div>
           </div>
         ))}

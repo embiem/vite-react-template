@@ -1,8 +1,9 @@
 import { Routes, Route, Link } from "react-router-dom";
 
-import ItemsPage from "./pages/Items";
+import ItemsPage from "./pages/Products";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
+import ProductDetail from "./pages/ProductDetail";
 import { authClient } from "./lib/auth-client";
 import { useCallback } from "react";
 
@@ -27,7 +28,7 @@ function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/">Home</Link>
             </li>
             <li>
-              <Link to="/items">Items (Query Demo)</Link>
+              <Link to="/products">Products</Link>
             </li>
             <li>
               {userSession.data ? (
@@ -49,7 +50,8 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/items" element={<ItemsPage />} />
+        <Route path="/products" element={<ItemsPage />} />
+        <Route path="/products/:productId" element={<ProductDetail />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>
     </Layout>

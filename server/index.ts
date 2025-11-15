@@ -2,6 +2,9 @@ import { serve } from "@hono/node-server";
 import { Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./auth";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { product } from "./schema";
 
 const app = new Hono();
 
@@ -32,34 +35,40 @@ app.get("/health", (c) => {
   return c.json({ status: "ok" });
 });
 
-// Mock data endpoint for React Query example
-const mockItems = [
-  {
-    id: 1,
-    name: "React",
-    description: "A JavaScript library for building user interfaces",
-  },
-  {
-    id: 2,
-    name: "Hono",
-    description: "Ultrafast web framework for the Edges",
-  },
-  {
-    id: 3,
-    name: "Drizzle ORM",
-    description: "TypeScript ORM for SQL databases",
-  },
-  {
-    id: 4,
-    name: "TanStack Query",
-    description: "Powerful asynchronous state management for TS/JS",
-  },
-];
+app.get("/api/products", async (c) => {
+  let products = await db.query.product.findMany({ orderBy: product.id });
 
-app.get("/api/items", async (c) => {
-  // Simulate network delay
-  await new Promise((r) => setTimeout(r, 500));
-  return c.json(mockItems);
+  if (!products.length) {
+    // Seed with fakestoreapi
+    const response = await fetch("https://fakestoreapi.com/products");
+    products = await response.json();
+    await db.insert(product).values(products);
+  }
+
+  return c.json(products);
+});
+
+app.get("/api/products/:productID", async (c) => {
+  const productID = c.req.param("productID");
+
+  const productRes = await db.query.product.findFirst({
+    where: eq(product.id, parseInt(productID)),
+  });
+
+  return c.json(productRes);
+});
+
+app.put("/api/products/:productID", async (c) => {
+  const productID = c.req.param("productID");
+
+  const payload = await c.req.json();
+  // TODO: verify payload
+
+  const updatedProduct = await db
+    .update(product)
+    .set(payload)
+    .where(eq(product.id, parseInt(productID)));
+  return c.json(updatedProduct);
 });
 
 // Helper to get current user from session
